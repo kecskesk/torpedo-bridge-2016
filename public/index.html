@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+
+	<title>Torpedo Bridge</title>
+	<!-- Angular Material style sheet -->
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+	<!-- Angular Material requires Angular.js Libraries -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+	<!-- Angular Material Library -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimal-ui" />
+
+	<!-- FabricJS canvas Library -->
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.6.6/fabric.min.js"></script>
+
+
+
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet">
+<body>
+
+
+
+<div ng-app="torpedo-app" ng-controller="MainCtrl" layout="column" ng-cloak>
+	<div>
+		<md-toolbar>
+			  <div class="md-toolbar-tools" layout="row" class="md-primary">
+				<div  layout="column" flex >
+					<h2  class="md-title" layout-align="start center">
+					  Torpedo Bridge
+					</h2>
+
+					</div>
+					<md-button ng-click="startGame()">Start Game</md-button>
+					<md-button ng-disabled="!gameID" ng-click="joinGame()">Join Game</md-button>
+					<md-button ng-disabled="!gameID" ng-click="getGameInfo()">Refresh Game</md-button>
+					<md-button ng-disabled="!gameID" ng-click="getSubmarines()">Refresh Submarines</md-button>
+
+				<span flex></span>
+			  </div>
+		</md-toolbar>
+	</div>
+	<div layout="row">
+		{{gameInfo}}
+	</div>
+
+	<div layout="row" layout-xs="column">
+		<md-card ng-repeat="submarine in submarines">
+        <md-card-title>
+          <md-card-title-text>
+            <span class="md-headline">{{submarine.type}} {{submarine.id}}</span>
+						<span class="md-subhead">X: {{submarine.position.x}}</span>
+						<span class="md-subhead">Y: {{submarine.position.y}}</span>
+          </md-card-title-text>
+        </md-card-title>
+				<md-card-content>
+					<div layout="row">
+						Speed {{submarine.velocity}}
+					</div>
+					<md-progress-linear md-mode="determinate" value="{{submarine.hp}}"></md-progress-linear>
+					<div layout="column">
+						<div layout="row">
+							<md-input-container>
+								<label>Speed</label>
+								<input max="{{gameInfo.maxAccelerationPerRound}}" type="number" ng-model="submarine.speed">
+							</md-input-container>
+							<md-input-container>
+								<label>Turn</label>
+								<input max="{{gameInfo.maxAccelerationPerRound}}" type="number" ng-model="submarine.turn">
+							</md-input-container>
+							<md-button ng-click="move(submarine.id, submarine.speed, submarine.turn)">Move</md-button>
+						</div>
+						<div layout="row">
+							<md-input-container>
+								<label>Title</label>
+								<input  type="number" ng-model="submarine.acc">
+							</md-input-container>
+							<md-button ng-click="move()">Shoot</md-button>
+						</div>
+				</div>
+				</md-card-content>
+      </md-card>
+	</div>
+	<div layout="row" layout-xs="column">
+		<canvas id="map" style="border:1px solid #000000;"></canvas>
+	</div>
+</div>
+
+
+<script>
+var BASE_URL = "http://195.228.45.100:8080/jc16-srv";
+var app = angular.module('torpedo-app', ['ngMaterial']);
+app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
+
+//	$http.get(BASE_URL + "/") //todo
+//	 .then(function(response) {
+//			 	$scope.submarines = response.data;
+//	 });
+	// Set Header for all HTTP request
+   $http.defaults.headers.common.TEAMTOKEN = '355CCC4899499A19FB06D319744CB785';
+	 var canvas = new fabric.StaticCanvas('map');
+
+
+	 $scope.startGame = function() {
+		 	$http.post(BASE_URL + "/game") //todo
+			 .success(function(response) {
+					 	$scope.gameID = response.id;
+			 });
+	 };
+
+	 $scope.joinGame = function() {
+		 	$http.post(BASE_URL + "/game/" + $scope.gameID)
+			 .success(function(response) {
+					 	console.log('Joined game');
+			 });
+	 };
+
+	 $scope.getGameInfo = function() {
+			$http.get(BASE_URL + "/game/" + $scope.gameID) //todo
+			 .success(function(response) {
+						$scope.gameInfo = response;
+						canvas.setWidth(response.game.mapConfiguration.width);
+						canvas.setHeight(response.game.mapConfiguration.height);
+						for(var island of response.game.mapConfiguration.islandPositions){
+							var circle = new fabric.Circle({
+							  radius: $scope.gameInfo.game.mapConfiguration.islandSize, fill: 'red', left: island.x, top: ($scope.gameInfo.game.mapConfiguration.height - island.y), originX: 'center', originY: 'center'
+							});
+							canvas.add(circle);
+						}
+			 });
+	 };
+
+	 $scope.getSubmarines = function() {
+			$http.get(BASE_URL + "/game/" + $scope.gameID + "/submarine") //todo
+			 .success(function(response) {
+						$scope.submarines = response.submarines;
+						canvas.clear();
+
+						for(var sub of response.submarines){
+							var circle = new fabric.Circle({
+							  radius: $scope.gameInfo.game.mapConfiguration.submarineSize, fill: 'green', left: sub.position.x, top: ($scope.gameInfo.game.mapConfiguration.height - sub.position.y), originX: 'center', originY: 'center'
+							});
+							canvas.add(circle);
+						}
+			 });
+	 };
+
+	 $scope.move = function(submarineID, speed, turn) {
+		 data = {
+			 'speed': speed,
+			 'turn': turn
+		 }
+			$http.post(BASE_URL + "/game/" + $scope.gameID + "/submarine/" + submarineID +"/move", data)
+			 .success(function(response) {
+						console.log(response);
+			 });
+	 };
+
+});
+
+app.config(function($mdThemingProvider) {
+  $mdThemingProvider.theme('default')
+    .primaryPalette('blue-grey')
+    .accentPalette('red');
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "torpedo-bridge",
+  "version": "1.0.0",
+  "description": "This is a UI for JavaChallenge Submarine game-engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+	"start": "node index.js"
+  },
+  "author": "Soma",
+  "license": "ISC",
+  "dependencies": {
+    "bower": "^1.7.9",
+    "express": "^4.13.4"
+  }
+}
+
