@@ -116,13 +116,6 @@ app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
 				});
 				canvas.add(torpedoRange1);
 
-				var torpedoRange2 = new fabric.Circle({
-					radius: infos.game.mapConfiguration.torpedoRange, fill:undefined,  stroke: "grey",  strokeWidth: 1, 
-					left: e.position.x, top: (infos.game.mapConfiguration.height - e.position.y), 
-					originX: 'center', originY: 'center'
-				});
-				canvas.add(torpedoRange2);
-
 				drawSpeed(e, infos.game.mapConfiguration.height);
 			}
 
