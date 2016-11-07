@@ -1,75 +1,155 @@
-var BASE_URL = "http://195.228.45.100:8080/jc16-srv";
+var BASE_URL = "http://localhost:4567";
 var app = angular.module('torpedo-app', ['ngMaterial']);
 
 app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
 
-//	$http.get(BASE_URL + "/") //todo
-//	 .then(function(response) {
-//			 	$scope.submarines = response.data;
-//	 });
-	// Set Header for all HTTP request
-   $http.defaults.headers.common.TEAMTOKEN = '355CCC4899499A19FB06D319744CB785';
 	var canvas = new fabric.StaticCanvas('map');
-    var islandCircle = null;
-	 $scope.startGame = function() {
-		 	$http.post(BASE_URL + "/game") //todo
-			 .success(function(response) {
-					 	$scope.gameID = response.id;
-			 });
-	 };
+	var interval = 2000;  // 1000 = 1 second, 3000 = 3 seconds
+	function doAjax() {
+		canvas.clear();
+	 	$http.get(BASE_URL + "/rest/getInfos").success(function(response) {
+				$scope.infos = response;
 
-	 $scope.joinGame = function() {
-		 	$http.post(BASE_URL + "/game/" + $scope.gameID)
-			 .success(function(response) {
-					 	console.log('Joined game');
-			 });
-	 };
+				// Draw things
+				drawGameBase(response);
+				drawSubmarines(response);
+				drawEntities(response);
+				setTimeout(doAjax, interval);
+		 });
+	};
+	setTimeout(doAjax, interval);
 
-	 $scope.getGameInfo = function() {
-			$http.get(BASE_URL + "/game/" + $scope.gameID) //todo
-			 .success(function(response) {
-						$scope.gameInfo = response;
-						canvas.setWidth(response.game.mapConfiguration.width);
-						canvas.setHeight(response.game.mapConfiguration.height);
-						for (var island of response.game.mapConfiguration.islandPositions){
-							var circle = new fabric.Circle({
-							  radius: $scope.gameInfo.game.mapConfiguration.islandSize, fill: 'red', left: island.x, top: ($scope.gameInfo.game.mapConfiguration.height - island.y), originX: 'center', originY: 'center'
-							});
-							canvas.add(circle);
-							islandCircle = circle;
-						}
-			 });
-	 };
+	function drawGameBase(infos) {
+		canvas.setWidth(infos.game.mapConfiguration.width);
+		canvas.setHeight(infos.game.mapConfiguration.height);
+		for (var island of infos.game.mapConfiguration.islandPositions){
+			var circle = new fabric.Circle({
+				radius: infos.game.mapConfiguration.islandSize, fill: 'red', 
+				left: island.x, top: (infos.game.mapConfiguration.height - island.y), 
+				originX: 'center', originY: 'center'
+			});
+			canvas.add(circle);
+		}
+	};
 
-	 $scope.getSubmarines = function() {
-			$http.get(BASE_URL + "/game/" + $scope.gameID + "/submarine") //todo
-			 .success(function(response) {
-						$scope.submarines = response.submarines;
-						canvas.clear();
-						for (var sub of response.submarines){
-							var circle = new fabric.Circle({
-							  radius: $scope.gameInfo.game.mapConfiguration.submarineSize, fill: 'green', left: sub.position.x, top: ($scope.gameInfo.game.mapConfiguration.height - sub.position.y), originX: 'center', originY: 'center'
-							});
-							canvas.add(circle);
-							canvas.add(islandCircle);
-						}
-			 });
-	 };
+	function drawSubmarines(infos) {
+		for (var sub of infos.submarines){
+			var circle = new fabric.Circle({
+				radius: infos.game.mapConfiguration.submarineSize, fill: 'green', 
+				left: sub.position.x, top: (infos.game.mapConfiguration.height - sub.position.y), 
+				originX: 'center', originY: 'center'
+			});
+			canvas.add(circle);
 
-	 $scope.move = function(submarineID, speed, turn) {
-		 data = {
-			 'speed': speed,
-			 'turn': turn
-		 }
-			$http.post(BASE_URL + "/game/" + $scope.gameID + "/submarine/" + submarineID +"/move", data)
-			 .success(function(response) {
-						console.log(response);
-			 });
-	 };
 
-	 $scope.getGameInfoText = function() {
-	    return JSON.stringify($scope.gameInfo, null, 4);
-	 };
+			var sonarRange = new fabric.Circle({
+				radius: infos.game.mapConfiguration.sonarRange, fill:undefined,  stroke: "green",  strokeWidth: 2, 
+				left: sub.position.x, top: (infos.game.mapConfiguration.height - sub.position.y), 
+				originX: 'center', originY: 'center'
+			});
+			canvas.add(sonarRange);
+
+			var submarineNumber = new fabric.Text(sub.id.toString(), {
+			  left: sub.position.x - 25, top: (infos.game.mapConfiguration.height - sub.position.y) - 15, fontSize: 15
+			});
+			canvas.add(submarineNumber);
+
+			var health = new fabric.Text('HP:100/'+sub.hp.toString(), {
+			  left: sub.position.x - 25, top: (infos.game.mapConfiguration.height - sub.position.y) + 10, fontSize: 15
+			});
+			canvas.add(health);
+
+			var trg = infos.targetStore[sub.id];
+			var target = new fabric.Circle({
+				radius: 2, fill: 'darkgreen', 
+				left: trg.x, top: (infos.game.mapConfiguration.height - trg.y), 
+				originX: 'center', originY: 'center'
+			});
+			canvas.add(target);
+
+			var targetNumber = new fabric.Text(sub.id.toString(), {
+			  left: trg.x, top: (infos.game.mapConfiguration.height - trg.y), fontSize: 15
+			});
+			canvas.add(targetNumber);
+
+			drawSpeed(sub, infos.game.mapConfiguration.height);
+		}
+	};
+
+	function drawEntities(infos) {
+		for (var e of infos.entities){
+			if (e.type === 'Submarine' && e.owner.name !== 'Thats No Moon') {
+				var entity = new fabric.Circle({
+					radius: infos.game.mapConfiguration.submarineSize, fill: 'red', 
+					left: e.position.x, top: (infos.game.mapConfiguration.height - e.position.y), 
+					originX: 'center', originY: 'center'
+				});
+				canvas.add(entity);
+				var sonarRange = new fabric.Circle({
+					radius: infos.game.mapConfiguration.sonarRange, fill:undefined,  stroke: "red",  strokeWidth: 1, 
+					left: e.position.x, top: (infos.game.mapConfiguration.height - e.position.y), 
+					originX: 'center', originY: 'center'
+				});
+				canvas.add(sonarRange);
+
+				var owner = new fabric.Text(e.owner.name, {
+				  left: e.position.x - 25, top: (infos.game.mapConfiguration.height - e.position.y) + 10, fontSize: 15
+				});
+				canvas.add(owner);
+
+				drawSpeed(e, infos.game.mapConfiguration.height);
+
+			}
+
+			if (e.type === 'Torpedo') {
+
+				var entity = new fabric.Circle({
+					radius: 2, fill: 'black', 
+					left: e.position.x, top: (infos.game.mapConfiguration.height - e.position.y), 
+					originX: 'center', originY: 'center'
+				});
+				canvas.add(entity);
+				var torpedoRange1 = new fabric.Circle({
+					radius: infos.game.mapConfiguration.torpedoExplosionRadius, fill:undefined,  stroke: "black",  strokeWidth: 1, 
+					left: e.position.x, top: (infos.game.mapConfiguration.height - e.position.y), 
+					originX: 'center', originY: 'center'
+				});
+				canvas.add(torpedoRange1);
+
+				var torpedoRange2 = new fabric.Circle({
+					radius: infos.game.mapConfiguration.torpedoRange, fill:undefined,  stroke: "grey",  strokeWidth: 1, 
+					left: e.position.x, top: (infos.game.mapConfiguration.height - e.position.y), 
+					originX: 'center', originY: 'center'
+				});
+				canvas.add(torpedoRange2);
+
+				drawSpeed(e, infos.game.mapConfiguration.height);
+			}
+
+			
+		}
+	};
+
+	function drawSpeed(e, height) {
+		var velocity_X = e.velocity*Math.cos(e.angle * Math.PI / 180);
+		var velocity_Y = e.velocity*Math.sin(e.angle * Math.PI / 180);
+
+		var inverted_y = height - e.position.y;
+
+		var current = new fabric.Line([
+			e.position.x, 
+			inverted_y, 
+			e.position.x + velocity_X, 
+			inverted_y - velocity_Y
+			], {
+	        stroke: 'DarkRed',
+	        strokeWidth: 2,
+		    originX: 'center',
+		    originY: 'center'
+
+	    });
+		canvas.add(current);
+	};
 
 });
 

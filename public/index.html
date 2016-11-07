@@ -30,58 +30,16 @@
 					<h2  class="md-title" layout-align="start center">
 					  Torpedo Bridge
 					</h2>
-
-					</div>
-					<md-button ng-click="startGame()">Start Game</md-button>
-					<md-button ng-disabled="!gameID" ng-click="joinGame()">Join Game</md-button>
-					<md-button ng-disabled="!gameID" ng-click="getGameInfo()">Refresh Game</md-button>
-					<md-button ng-disabled="!gameID" ng-click="getSubmarines()">Refresh Submarines</md-button>
-
+				</div>
 				<span flex></span>
 			  </div>
 		</md-toolbar>
 	</div>
 	<div layout="row">
-		<pre>{{getGameInfoText()}}</pre>
+		<pre>{{infos}}</pre>
 	</div>
-
-	<div layout="row" layout-xs="column">
-		<md-card ng-repeat="submarine in submarines">
-        <md-card-title>
-          <md-card-title-text>
-            <span class="md-headline">{{submarine.type}} {{submarine.id}}</span>
-						<span class="md-subhead">X: {{submarine.position.x}}</span>
-						<span class="md-subhead">Y: {{submarine.position.y}}</span>
-          </md-card-title-text>
-        </md-card-title>
-				<md-card-content>
-					<div layout="row">
-						Speed {{submarine.velocity}}
-					</div>
-					<md-progress-linear md-mode="determinate" value="{{submarine.hp}}"></md-progress-linear>
-					<div layout="column">
-						<div layout="row">
-							<md-input-container>
-								<label>Speed</label>
-								<input max="{{gameInfo.maxAccelerationPerRound}}" type="number" ng-model="submarine.speed">
-							</md-input-container>
-							<md-input-container>
-								<label>Turn</label>
-								<input max="{{gameInfo.maxAccelerationPerRound}}" type="number" ng-model="submarine.turn">
-							</md-input-container>
-							<md-button ng-click="move(submarine.id, submarine.speed, submarine.turn)">Move</md-button>
-						</div>
-						<div layout="row">
-							<md-input-container>
-								<label>Title</label>
-								<input  type="number" ng-model="submarine.acc">
-							</md-input-container>
-							<md-button ng-click="move()">Shoot</md-button>
-						</div>
-				</div>
-				</md-card-content>
-      </md-card>
-	</div>
+	<h1>ROUND {{infos.game.round}} - SCORE: {{infos.game.scores.scores}}</h1>
+	
 	<div layout="row" layout-xs="column">
 		<canvas id="map" style="border:1px solid #000000;"></canvas>
 	</div>
