@@ -2,8 +2,7 @@ var BASE_URL = "http://localhost:4567";
 var app = angular.module('torpedo-app', ['ngMaterial']);
 
 app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
-    $scope.moveForm = {x: 0, y: 0, submarineIds: []};
-    $scope.submarines = {};
+    $scope.moveForm = {x: 0, y: 0};
 	var canvas = new fabric.StaticCanvas('map');
 	var interval = 2000;  // 1000 = 1 second, 3000 = 3 seconds
 
@@ -26,10 +25,14 @@ app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
     $scope.move = function() {
         var res = $http.post(BASE_URL + "/rest/move", $scope.moveForm);
 	    res.success(function(data, status, headers, config) {
-			console.log(data);
+	        if (data) {
+			    console.log(data);
+			}
 		});
 		res.error(function(data, status, headers, config) {
-			console.log(data);
+		    if (data) {
+			    console.log(data);
+			}
 		});
     };
 
