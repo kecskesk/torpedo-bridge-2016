@@ -2,9 +2,11 @@ var BASE_URL = "http://localhost:4567";
 var app = angular.module('torpedo-app', ['ngMaterial']);
 
 app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
+    $scope.moveForm = {x: 0, y: 0, submarineId: 0};
 
 	var canvas = new fabric.StaticCanvas('map');
 	var interval = 2000;  // 1000 = 1 second, 3000 = 3 seconds
+
 	function doAjax() {
 		canvas.clear();
 	 	$http.get(BASE_URL + "/rest/getInfos").success(function(response) {
@@ -17,7 +19,18 @@ app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
 				setTimeout(doAjax, interval);
 		 });
 	};
+
 	setTimeout(doAjax, interval);
+
+    $scope.move = function() {
+        var res = $http.post(BASE_URL + "/rest/move", $scope.moveForm);
+	    res.success(function(data, status, headers, config) {
+			console.log(data);
+		});
+		res.error(function(data, status, headers, config) {
+			console.log(data);
+		});
+    };
 
 	function drawGameBase(infos) {
 		canvas.setWidth(infos.game.mapConfiguration.width);

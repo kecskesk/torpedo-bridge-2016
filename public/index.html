@@ -21,8 +21,13 @@
 <body>
 
 
-
 <div ng-app="torpedo-app" ng-controller="MainCtrl" layout="column" ng-cloak>
+	<form id="commandForm" ng-submit="move()">
+		X: <input type="text" name="x" ng-model="moveForm.x"/>
+		Y: <input type="text" name="y" ng-model="moveForm.y"/>
+		SubmarineId: <input type="text" id="submarineId" name="submarineId" ng-model="moveForm.submarineId"/>
+		<input type="submit" name="Move" />
+	</form>
 	<div>
 		<md-toolbar>
 			  <div class="md-toolbar-tools" layout="row" class="md-primary">
@@ -43,6 +48,7 @@
 	<div layout="row" layout-xs="column">
 		<canvas id="map" style="border:1px solid #000000;"></canvas>
 	</div>
+
 </div>
 
 </body>
