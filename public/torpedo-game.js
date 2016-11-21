@@ -23,17 +23,17 @@ app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
 	setTimeout(doAjax, interval);
 
     $scope.move = function() {
-        var res = $http.post(BASE_URL + "/rest/move", $scope.moveForm);
-	    res.success(function(data, status, headers, config) {
-	        if (data) {
-			    console.log(data);
-			}
-		});
-		res.error(function(data, status, headers, config) {
-		    if (data) {
-			    console.log(data);
-			}
-		});
+        $http.post(BASE_URL + "/rest/move", $scope.moveForm)
+		    .success(function(data, status, headers, config) {
+		        if (data) {
+		        	console.log('successful move request: ' + data);
+				}
+			})
+			.error(function(data, status, headers, config) {
+			    if (data) {
+		        	console.log('error in move request: ' + data);
+				}
+			});
     };
 
 	function drawGameBase(infos) {
@@ -76,18 +76,15 @@ app.controller('MainCtrl', function($scope, $http, $mdToast, $mdSidenav) {
 			});
 			canvas.add(health);
 
-			var trg = infos.targetStore[sub.id];
-			var target = new fabric.Circle({
-				radius: 2, fill: 'darkgreen', 
-				left: trg.x, top: (infos.game.mapConfiguration.height - trg.y), 
-				originX: 'center', originY: 'center'
-			});
-			canvas.add(target);
-
-			var targetNumber = new fabric.Text(sub.id.toString(), {
-			  left: trg.x, top: (infos.game.mapConfiguration.height - trg.y), fontSize: 15
-			});
-			canvas.add(targetNumber);
+			var trg = infos.target;
+			if (trg) {
+				var target = new fabric.Circle({
+					radius: 2, fill: 'darkgreen', 
+					left: trg.x, top: (infos.game.mapConfiguration.height - trg.y), 
+					originX: 'center', originY: 'center'
+				});
+				canvas.add(target);
+			}
 
 			drawSpeed(sub, infos.game.mapConfiguration.height);
 		}
